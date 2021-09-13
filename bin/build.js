@@ -441,35 +441,46 @@ const getOazaAddressItems = async (prefCode, postalCodeKanaItems, postalCodeRome
       cityCodes[cityName] = line['市区町村コード']
     }
 
+    // NOTE: lat: latitude: 緯度
+    // NOTE: lon: longitude: 経度
+    const lat = line['緯度'];
+    const lon = line['経度'];
+
     const recordKey = line['都道府県名'] + cityName + line['大字町丁目名']
     const record = [
-      postalCodeKanaItem['郵便番号'],
-      prefCode,
+      // postalCodeKanaItem['郵便番号'],
+      // prefCode,
+      // line['都道府県名'],
+      // postalCodeKanaItem
+      //   ? han2zen(postalCodeKanaItem['都道府県名カナ'])
+      //   : '',
+      // postalCodeRomeItem
+      //   ? postalCodeRomeItem['都道府県名ローマ字']
+      //   : '',
+      // line['市区町村コード'],
+      // cityName,
+      // postalCodeKanaItem
+      //   ? han2zen(postalCodeKanaItem['市区町村名カナ'])
+      //   : '',
+      // postalCodeRomeItem
+      //   ? postalCodeRomeItem['市区町村名ローマ字']
+      //   : '',
+      // line['大字町丁目名'],
+      // postalCodeKanaItem
+      //   ? han2zen(removeStringEnclosedInParentheses(postalCodeKanaItem['町域名カナ'])) + (getChomeNumber(line['大字町丁目名']) !== '' ? ` ${getChomeNumber(line['大字町丁目名'])}` : '')
+      //   : '',
+      // postalCodeRomeItem
+      //   ? removeStringEnclosedInParentheses(postalCodeRomeItem['町域名ローマ字']) + (getChomeNumber(line['大字町丁目名']) !== '' ? ` ${getChomeNumber(line['大字町丁目名'])}` : '')
+      //   : '',
+      // '',
+      // Number(line['緯度']),
+      // Number(line['経度'])
+      line['大字町丁目コード'],
       line['都道府県名'],
-      postalCodeKanaItem
-        ? han2zen(postalCodeKanaItem['都道府県名カナ'])
-        : '',
-      postalCodeRomeItem
-        ? postalCodeRomeItem['都道府県名ローマ字']
-        : '',
-      line['市区町村コード'],
       cityName,
-      postalCodeKanaItem
-        ? han2zen(postalCodeKanaItem['市区町村名カナ'])
-        : '',
-      postalCodeRomeItem
-        ? postalCodeRomeItem['市区町村名ローマ字']
-        : '',
       line['大字町丁目名'],
-      postalCodeKanaItem
-        ? han2zen(removeStringEnclosedInParentheses(postalCodeKanaItem['町域名カナ'])) + (getChomeNumber(line['大字町丁目名']) !== '' ? ` ${getChomeNumber(line['大字町丁目名'])}` : '')
-        : '',
-      postalCodeRomeItem
-        ? removeStringEnclosedInParentheses(postalCodeRomeItem['町域名ローマ字']) + (getChomeNumber(line['大字町丁目名']) !== '' ? ` ${getChomeNumber(line['大字町丁目名'])}` : '')
-        : '',
-      '',
-      Number(line['緯度']),
-      Number(line['経度'])
+      `POINT(${lon} ${lat})`,
+      postalCodeKanaItem['郵便番号'],
     ]
       .map(item =>
         item && typeof item === 'string' ? `"${item}"` : item,
@@ -560,6 +571,11 @@ const getGaikuAddressItems = async (prefCode, postalCodeKanaItems, postalCodeRom
       continue
     }
 
+    // NOTE: lat: latitude: 緯度
+    // NOTE: lon: longitude: 経度
+    const lat = line['緯度'];
+    const lon = line['経度'];
+    
     const townName = line['大字・丁目名']
     const postalCodeKanaItem = getPostalKanaOrRomeItems(
       line['都道府県名'], cityName, townName, postalCodeKanaItems, '市区町村名カナ', 'kana',
@@ -570,40 +586,47 @@ const getGaikuAddressItems = async (prefCode, postalCodeKanaItems, postalCodeRom
 
     const center = getCenter(recordKey)
     const record = [
-      postalCodeKanaItem['郵便番号'],
-      prefCode,
+      // postalCodeKanaItem['郵便番号'],
+      // prefCode,
+      // line['都道府県名'],
+      // postalCodeKanaItem
+      //   ? han2zen(postalCodeKanaItem['都道府県名カナ'])
+      //   : '',
+      // postalCodeRomeItem
+      //   ? postalCodeRomeItem['都道府県名ローマ字']
+      //   : '',
+      // cityCodes[cityName],
+      // cityName,
+      // postalCodeKanaItem
+      //   ? han2zen(postalCodeKanaItem['市区町村名カナ'])
+      //   : '',
+      // postalCodeRomeItem
+      //   ? postalCodeRomeItem['市区町村名ローマ字']
+      //   : '',
+      // townName,
+      // postalCodeKanaItem
+      //   ? han2zen(removeStringEnclosedInParentheses(postalCodeKanaItem['町域名カナ'])) + (getChomeNumber(townName) !== '' ? ` ${getChomeNumber(townName)}` : '')
+      //   : '',
+      // postalCodeRomeItem
+      //   ? removeStringEnclosedInParentheses(postalCodeRomeItem['町域名ローマ字']) + (getChomeNumber(townName) !== '' ? ` ${getChomeNumber(townName)}` : '')
+      //   : '',
+      // line['小字・通称名'],
+      // Number(center.geometry.coordinates[1]),
+      // Number(center.geometry.coordinates[0])
+
+      line['大字町丁目コード'],
       line['都道府県名'],
-      postalCodeKanaItem
-        ? han2zen(postalCodeKanaItem['都道府県名カナ'])
-        : '',
-      postalCodeRomeItem
-        ? postalCodeRomeItem['都道府県名ローマ字']
-        : '',
-      cityCodes[cityName],
       cityName,
-      postalCodeKanaItem
-        ? han2zen(postalCodeKanaItem['市区町村名カナ'])
-        : '',
-      postalCodeRomeItem
-        ? postalCodeRomeItem['市区町村名ローマ字']
-        : '',
       townName,
-      postalCodeKanaItem
-        ? han2zen(removeStringEnclosedInParentheses(postalCodeKanaItem['町域名カナ'])) + (getChomeNumber(townName) !== '' ? ` ${getChomeNumber(townName)}` : '')
-        : '',
-      postalCodeRomeItem
-        ? removeStringEnclosedInParentheses(postalCodeRomeItem['町域名ローマ字']) + (getChomeNumber(townName) !== '' ? ` ${getChomeNumber(townName)}` : '')
-        : '',
-      line['小字・通称名'],
-      Number(center.geometry.coordinates[1]),
-      Number(center.geometry.coordinates[0])
+      `POINT(${lon} ${lat})`,
+      postalCodeKanaItem['郵便番号'],
     ]
       .map(item =>
         item && typeof item === 'string' ? `"${item}"` : item,
       )
       .join(',') + '\n'
 
-    records[recordKey] = record
+    // records[recordKey] = record
     count++
   } // line iteration
   bar.stop()
@@ -692,21 +715,27 @@ const main = async () => {
   }, 1)
 
   outfileWriterQueue.push([
-    '"郵便番号"',
-    '"都道府県コード"',
-    '"都道府県名"',
-    '"都道府県名カナ"',
-    '"都道府県名ローマ字"',
-    '"市区町村コード"',
-    '"市区町村名"',
-    '"市区町村名カナ"',
-    '"市区町村名ローマ字"',
-    '"大字町丁目名"',
-    '"大字町丁目名カナ"',
-    '"大字町丁目名ローマ字"',
-    '"小字・通称名"',
-    '"緯度"',
-    '"経度"'
+    // '"郵便番号"',
+    // '"都道府県コード"',
+    // '"都道府県名"',
+    // '"都道府県名カナ"',
+    // '"都道府県名ローマ字"',
+    // '"市区町村コード"',
+    // '"市区町村名"',
+    // '"市区町村名カナ"',
+    // '"市区町村名ローマ字"',
+    // '"大字町丁目名"',
+    // '"大字町丁目名カナ"',
+    // '"大字町丁目名ローマ字"',
+    // '"小字・通称名"',
+    // '"緯度"',
+    // '"経度"'
+    'id', // NOTE: 住所ID(大字町丁目コード)
+    'pref', // NOTE: 都道府県名
+    'city', // NOTE: 市区町村名
+    'street', // NOTE: 大字町丁目名
+    'location', // NOTE: 位置(経度 緯度)
+    'zipcode', // NOTE: 郵便番号
   ].join(',') + '\n')
 
   for (let i = 0; i < prefCodeArray.length; i++) {
