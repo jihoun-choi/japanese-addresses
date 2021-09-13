@@ -443,6 +443,7 @@ const getOazaAddressItems = async (prefCode, postalCodeKanaItems, postalCodeRome
 
     const recordKey = line['都道府県名'] + cityName + line['大字町丁目名']
     const record = [
+      postalCodeKanaItem['郵便番号'],
       prefCode,
       line['都道府県名'],
       postalCodeKanaItem
@@ -569,6 +570,7 @@ const getGaikuAddressItems = async (prefCode, postalCodeKanaItems, postalCodeRom
 
     const center = getCenter(recordKey)
     const record = [
+      postalCodeKanaItem['郵便番号'],
       prefCode,
       line['都道府県名'],
       postalCodeKanaItem
@@ -690,6 +692,7 @@ const main = async () => {
   }, 1)
 
   outfileWriterQueue.push([
+    '"郵便番号"',
     '"都道府県コード"',
     '"都道府県名"',
     '"都道府県名カナ"',
