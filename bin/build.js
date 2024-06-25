@@ -31,12 +31,9 @@ const isjPostalMappings = [
   { pref: '茨城県', postal: '龍ケ崎市', isj: '龍ヶ崎市' },
   { pref: '千葉県', postal: '鎌ケ谷市', isj: '鎌ヶ谷市' },
   { pref: '千葉県', postal: '袖ケ浦市', isj: '袖ヶ浦市' },
-  { pref: '東京都', postal: '三宅島三宅村', isj: '三宅村',
-    kana: 'ミヤケムラ', rome: 'MIYAKE MURA' },
-  { pref: '東京都', postal: '八丈島八丈町', isj: '八丈町',
-    kana: 'ハチジョウマチ', rome: 'HACHIJO MACHI' },
-  { pref: '滋賀県', postal: '犬上郡多賀町', isj: '犬上郡大字多賀町',
-    kana: 'イヌカミグンオオアザタガチョウ', rome: 'INUKAMI GUN OAZA TAGA CHO' },
+  { pref: '東京都', postal: '三宅島三宅村', isj: '三宅村', kana: 'ミヤケムラ', rome: 'MIYAKE MURA' },
+  { pref: '東京都', postal: '八丈島八丈町', isj: '八丈町', kana: 'ハチジョウマチ', rome: 'HACHIJO MACHI' },
+  { pref: '滋賀県', postal: '犬上郡多賀町', isj: '犬上郡大字多賀町', kana: 'イヌカミグンオオアザタガチョウ', rome: 'INUKAMI GUN OAZA TAGA CHO' },
   { pref: '福岡県', postal: '糟屋郡須惠町', isj: '糟屋郡須恵町' },
 ]
 
@@ -197,9 +194,28 @@ const normalizePostalValue = text => {
   return text.replace('　', '').trim()
 }
 
-const REMOVE_CHOME_REGEX = /[二三四五六七八九]?十?[一二三四五六七八九]?丁目?$/
-const removeChome = text => text.replace(REMOVE_CHOME_REGEX, '')
+// const REMOVE_CHOME_REGEX = /[二三四五六七八九]?十?[一二三四五六七八九]?丁目?$/
+// const removeChome = text => text.replace(REMOVE_CHOME_REGEX, '')
 
+// 大字町丁名から「字」「大字」を削除
+// const REMOVE_OOAZA_REGEX = /^大字|^字|大字/
+// const removeOoaza = text => text.replace(REMOVE_OOAZA_REGEX, '')
+
+// 大字町丁名から「字」「大字」「丁目」を削除
+const REMOVE_TOWNNAME_REGEX = /^大字|^字|大字|[二三四五六七八九]?十?[一二三四五六七八九]?丁目$/
+const removeTownName = text => text.replace(REMOVE_TOWNNAME_REGEX, '')
+
+const REPLACE_GA_REGEX = /ヶ/
+const REPLACE_GA_SUB = 'ケ'
+const replaceGa = text => text.replace(REPLACE_GA_REGEX, REPLACE_GA_SUB)
+
+const REMOVE_JI_REGEX = /字/
+const removeJI = text => text.replace(REMOVE_JI_REGEX, '')
+
+const REMOVE_MATI_REGEX = /町$/
+const removeMATI = text => text.replace(REMOVE_MATI_REGEX, '')
+
+// 使用なし
 const GET_CHOME_NUMBER_REGEX = /([二三四五六七八九]?十?[一二三四五六七八九]?)丁目?$/
 const getChomeNumber = (text, suffix = '') => {
   const match = text.match(GET_CHOME_NUMBER_REGEX)
@@ -227,14 +243,16 @@ const getPostalKanaOrRomeItems = (
     ({ pref, isj }) => (pref === prefName && isj === cityName),
   )
 
-  const townNameChomeRemoved = removeChome(townName)
+  // const townNameChomeRemoved = removeChome(townName)
+
+  const townNameRemoved = removeTownName(townName)
 
   if (postalAlt) {
     let postalRecord = postalCodeKanaOrRomeItems.find(
       item =>
         item['都道府県名'] === prefName &&
         item['市区町村名'] === postalAlt.postal &&
-        item['町域名'].indexOf(townNameChomeRemoved) === 0
+        item['町域名'].indexOf(townNameRemoved) === 0
       ,
     )
 
@@ -263,10 +281,39 @@ const getPostalKanaOrRomeItems = (
       item =>
         item['都道府県名'] === prefName &&
         item['市区町村名'] === cityName &&
-        item['町域名'].indexOf(townNameChomeRemoved) === 0
+        item['町域名'].indexOf(townNameRemoved) === 0
       ,
     )
-
+    if (!postalRecord && ~townNameRemoved.indexOf('ヶ')) {
+      const townNameGa = replaceGa(townNameRemoved)
+      postalRecord = postalCodeKanaOrRomeItems.find(
+        item =>
+          item['都道府県名'] === prefName &&
+          item['市区町村名'] === cityName &&
+          item['町域名'].indexOf(townNameGa) === 0
+        ,
+      )
+    }
+    if (!postalRecord && ~townNameRemoved.indexOf('字')) {
+      const townNameJI = removeJI(townNameRemoved)
+      postalRecord = postalCodeKanaOrRomeItems.find(
+        item =>
+          item['都道府県名'] === prefName &&
+          item['市区町村名'] === cityName &&
+          item['町域名'].indexOf(townNameJI) === 0
+        ,
+      )
+    }
+    if (!postalRecord && townNameRemoved.endsWith('町')) {
+      const townNameMati = removeMATI(townNameRemoved)
+      postalRecord = postalCodeKanaOrRomeItems.find(
+        item =>
+          item['都道府県名'] === prefName &&
+          item['市区町村名'] === cityName &&
+          item['町域名'].indexOf(townNameMati) === 0
+        ,
+      )
+    }
     if (!postalRecord) {
       postalRecord = postalCodeKanaOrRomeItems.find(
         item =>
@@ -285,7 +332,7 @@ const getPostalKanaOrRomeItems = (
   }
 }
 
-const _downloadZippedFile = (url, path) => new Promise( resolve => {
+const _downloadZippedFile = (url, path) => new Promise(resolve => {
   https.get(url, res => {
     res
       .pipe(unzip.Parse())
@@ -339,7 +386,7 @@ const downloadPostalCodeKana = async () => {
 module.exports.downloadPostalCodeKana = downloadPostalCodeKana
 
 const downloadPostalCodeRome = async () => {
-  const url = 'https://www.post.japanpost.jp/zipcode/dl/roman/ken_all_rome.zip'
+  const url = 'https://www.post.japanpost.jp/zipcode/dl/roman/KEN_ALL_ROME.zip'
   const csvPath = `${dataDir}/postalcode_roman.csv`
   if (!fs.existsSync(csvPath)) {
     await _downloadZippedFile(url, csvPath)
@@ -399,11 +446,11 @@ const _downloadNlftpMlitFile = (prefCode, outPath, version) => new Promise((reso
 const getOazaAddressItems = async (prefCode, postalCodeKanaItems, postalCodeRomeItems) => {
   const records = {}
   const cityCodes = {}
+  const OazaAddressFileName = `nlftp_mlit_160b_${prefCode}.csv`
 
-  const outPath = path.join(dataDir, `nlftp_mlit_130b_${prefCode}.csv`)
-
+  const outPath = path.join(dataDir, OazaAddressFileName)
   while (!fs.existsSync(outPath)) {
-    console.log(`${prefCode}: waiting for nlftp_mlit_130b_${prefCode}.csv...`)
+    console.log(`${prefCode}: waiting for ${OazaAddressFileName}...`)
     await sleep(1000)
   }
 
@@ -425,17 +472,18 @@ const getOazaAddressItems = async (prefCode, postalCodeKanaItems, postalCodeRome
 
     const renameEntry =
       isjRenames.find(
-        ({ pref, orig }) =>
-          (pref === line['都道府県名'] &&
-            orig === line['市区町村名']))
+        ({ pref, orig }) => (
+          pref === line['都道府県名'] &&
+          orig === line['市区町村名']
+        ))
     const cityName = renameEntry ? renameEntry.renamed : line['市区町村名']
 
     const postalCodeKanaItem = getPostalKanaOrRomeItems(
       line['都道府県名'], cityName, line['大字町丁目名'], postalCodeKanaItems, '市区町村名カナ', 'kana',
     )
-    const postalCodeRomeItem = getPostalKanaOrRomeItems(
-      line['都道府県名'], cityName, line['大字町丁目名'], postalCodeRomeItems, '市区町村名ローマ字', 'rome',
-    )
+    // const postalCodeRomeItem = getPostalKanaOrRomeItems(
+    //   line['都道府県名'], cityName, line['大字町丁目名'], postalCodeRomeItems, '市区町村名ローマ字', 'rome',
+    // )
 
     if (!cityCodes[cityName]) {
       cityCodes[cityName] = line['市区町村コード']
@@ -519,10 +567,10 @@ const getCenter = (recordKey) => {
 
 // 位置参照情報(街区レベル)から住所データを取得する
 const getGaikuAddressItems = async (prefCode, postalCodeKanaItems, postalCodeRomeItems, records, cityCodes) => {
-  const outPath = path.join(dataDir, `nlftp_mlit_180a_${prefCode}.csv`)
+  const outPath = path.join(dataDir, `nlftp_mlit_200a_${prefCode}.csv`)
 
   while (!fs.existsSync(outPath)) {
-    console.log(`${prefCode}: waiting for nlftp_mlit_180a_${prefCode}.csv...`)
+    console.log(`${prefCode}: waiting for nlftp_mlit_200a_${prefCode}.csv...`)
     await sleep(1000)
   }
 
@@ -541,13 +589,11 @@ const getGaikuAddressItems = async (prefCode, postalCodeKanaItems, postalCodeRom
     const line = data[index]
     const renameEntry =
       isjRenames.find(
-        ({ pref, orig }) =>
-          (pref === line['都道府県名'] &&
-            orig === line['市区町村名']))
+        ({ pref, orig }) => (pref === line['都道府県名'] && orig === line['市区町村名']))
     const cityName = renameEntry ? renameEntry.renamed : line['市区町村名']
     const recordKey = line['都道府県名'] + cityName + line['大字・丁目名'] + line['小字・通称名']
     addToCoords(recordKey, Number(line['経度']), Number(line['緯度']))
-　}
+  }
 
   let count = 0
 
@@ -560,8 +606,8 @@ const getGaikuAddressItems = async (prefCode, postalCodeKanaItems, postalCodeRom
     const renameEntry =
       isjRenames.find(
         ({ pref, orig }) =>
-          (pref === line['都道府県名'] &&
-            orig === line['市区町村名']))
+        (pref === line['都道府県名'] &&
+          orig === line['市区町村名']))
     const cityName = renameEntry ? renameEntry.renamed : line['市区町村名']
 
     const recordKey = line['都道府県名'] + cityName + line['大字・丁目名'] + line['小字・通称名']
@@ -575,7 +621,7 @@ const getGaikuAddressItems = async (prefCode, postalCodeKanaItems, postalCodeRom
     // NOTE: lon: longitude: 経度
     const lat = line['緯度'];
     const lon = line['経度'];
-    
+
     const townName = line['大字・丁目名']
     const postalCodeKanaItem = getPostalKanaOrRomeItems(
       line['都道府県名'], cityName, townName, postalCodeKanaItems, '市区町村名カナ', 'kana',
@@ -657,18 +703,18 @@ const getAddressItems = async (
     filteredPostalCodeRomeItems,
   )
 
-  const gaikuData = await getGaikuAddressItems(
-    prefCode,
-    filteredPostalCodeKanaItems,
-    filteredPostalCodeRomeItems,
-    oazaData.records,
-    oazaData.cityCodes
-  )
+  // const gaikuData = await getGaikuAddressItems(
+  //   prefCode,
+  //   filteredPostalCodeKanaItems,
+  //   filteredPostalCodeRomeItems,
+  //   oazaData.records,
+  //   oazaData.cityCodes
+  // )
 
-  records = gaikuData.records
+  records = oazaData.records
 
-  console.log(`${prefCode}: 街区レベル + 大字・町丁目レベル ${Object.values(records).length}件`)
-
+  // console.log(`${prefCode}: 街区レベル + 大字・町丁目レベル ${Object.values(records).length}件`)
+  console.log(`${prefCode}: 大字・町丁目レベル ${Object.values(records).length}件`)
   return { records }
 }
 
@@ -685,28 +731,28 @@ const main = async () => {
   process.stderr.write('done\n')
 
   const prefCodeArray = process.argv[2] ? [process.argv[2]] : Array.from(Array(47), (v, k) => k + 1)
-
-  const download130bQueue = async.queue(async prefCode => {
-    const outPath = path.join(dataDir, `nlftp_mlit_130b_${prefCode}.csv`)
-
+  // 大字・町丁目
+  const downloadOazaFileQueue = async.queue(async prefCode => {
+    const outPath = path.join(dataDir, `nlftp_mlit_160b_${prefCode}.csv`)
     if (!fs.existsSync(outPath)) {
-      await _downloadNlftpMlitFile(prefCode, outPath, '13.0b')
+      await _downloadNlftpMlitFile(prefCode, outPath, '16.0b')
     }
   }, 1)
 
-  const download180aQueue = async.queue(async prefCode => {
-    const outPath = path.join(dataDir, `nlftp_mlit_180a_${prefCode}.csv`)
+  // 街区
+  // const download180aQueue = async.queue(async prefCode => {
+  //   const outPath = path.join(dataDir, `nlftp_mlit_200a_${prefCode}.csv`)
 
-    if (!fs.existsSync(outPath)) {
-      await _downloadNlftpMlitFile(prefCode, outPath, '18.0a')
-    }
-  }, 3)
+  //   if (!fs.existsSync(outPath)) {
+  //     await _downloadNlftpMlitFile(prefCode, outPath, '20.0a')
+  //   }
+  // }, 3)
 
-
+  // 大字・町丁目のcsvファイルダウンロード
   prefCodeArray.forEach(prefNumber => {
     const prefCode = toPrefCode(prefNumber)
-    download130bQueue.push(prefCode)
-    download180aQueue.push(prefCode)
+    downloadOazaFileQueue.push(prefCode)
+    // download180aQueue.push(prefCode)
   })
 
   const outfile = await fs.promises.open(path.join(dataDir, 'latest.csv'), 'w')
