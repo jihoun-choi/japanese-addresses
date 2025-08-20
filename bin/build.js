@@ -446,7 +446,7 @@ const _downloadNlftpMlitFile = (prefCode, outPath, version) => new Promise((reso
 const getOazaAddressItems = async (prefCode, postalCodeKanaItems, postalCodeRomeItems) => {
   const records = {}
   const cityCodes = {}
-  const OazaAddressFileName = `nlftp_mlit_160b_${prefCode}.csv`
+  const OazaAddressFileName = `nlftp_mlit_180b_${prefCode}.csv`
 
   const outPath = path.join(dataDir, OazaAddressFileName)
   while (!fs.existsSync(outPath)) {
@@ -733,9 +733,9 @@ const main = async () => {
   const prefCodeArray = process.argv[2] ? [process.argv[2]] : Array.from(Array(47), (v, k) => k + 1)
   // 大字・町丁目
   const downloadOazaFileQueue = async.queue(async prefCode => {
-    const outPath = path.join(dataDir, `nlftp_mlit_160b_${prefCode}.csv`)
+    const outPath = path.join(dataDir, `nlftp_mlit_180b_${prefCode}.csv`)
     if (!fs.existsSync(outPath)) {
-      await _downloadNlftpMlitFile(prefCode, outPath, '16.0b')
+      await _downloadNlftpMlitFile(prefCode, outPath, '18.0b')
     }
   }, 1)
 
